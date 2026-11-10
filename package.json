@@ -1,0 +1,28 @@
+{
+  "name": "nstp-attendance",
+  "version": "1.0.0",
+  "private": true,
+  "description": "NSTP attendance app with expiring QR check-in/out and authentication",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "express-session": "^1.18.1",
+    "helmet": "^8.0.0",
+    "jsqr": "^1.4.0",
+    "multer": "^2.4.0",
+    "nodemailer": "^10.0.15",
+    "qrcode": "^1.5.4",
+    "yazl": "^3.3.1"
+  }
+}

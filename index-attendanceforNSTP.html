@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#2f654a">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="NSTP Attendance">
+  <title>NSTP Attendance Monitoring System</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="192x192" href="/icons/app-192.png">
+  <link rel="apple-touch-icon" href="/icons/app-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main id="app" class="shell">
+    <header class="topbar">
+      <a class="brand" href="/"><span class="brand-mark">N</span><span>NSTP <small>ISU · ATTENDANCE</small></span></a>
+      <div class="topbar-actions"><button id="install-app" class="button light hidden" type="button">Install app</button><div id="identity" class="identity hidden"></div></div>
+    </header>
+    <div id="notice" class="notice hidden" role="status"></div>
+    <section id="auth-view" class="auth-layout">
+      <div class="welcome-panel">
+        <span class="eyebrow">ISABELA STATE UNIVERSITY · NSTP</span>
+        <h1>Every moment<br>counts.</h1>
+        <p>A simple, secure way to manage NSTP attendance—from check-in to check-out.</p>
+        <div class="feature-list"><span>↗ QR codes refresh every 10 minutes</span><span>✓ Secure student accounts</span></div>
+      </div>
+      <div class="auth-card">
+        <div id="auth-tabs" class="auth-tabs"><button class="tab active" data-auth-tab="login">Sign in</button><button class="tab" data-auth-tab="register">Create account</button></div>
+        <form id="auth-form">
+          <fieldset id="login-role-field" class="login-role-field"><legend>Sign in as</legend><div class="role-picker"><label><input type="radio" name="loginRole" value="student" checked><span>Student</span></label><label><input type="radio" name="loginRole" value="admin"><span>Admin</span></label></div></fieldset>
+          <div id="name-field" class="field hidden"><label for="name">Full name</label><input id="name" name="name" autocomplete="name" minlength="2" maxlength="80"><label for="student-number">Student number</label><input id="student-number" name="studentNumber" autocomplete="off" minlength="4" maxlength="32" placeholder="Your ISU student number"><label for="student-section">ISU section</label><input id="student-section" name="sectionName" autocomplete="off" minlength="2" maxlength="80" placeholder="e.g. BSIT 1A WMAD" required><p class="field-hint">Type your section name. If it already exists, you’ll be added to that section. Your student number identifies your student account; it is not your password.</p></div>
+          <div class="field"><label id="email-label" for="email">Email address</label><input id="email" name="email" type="email" autocomplete="email" required><span id="email-hint" class="field-hint hidden">Use your personal email. It will be used to sign in and recover your account.</span></div>
+          <div id="password-field" class="field"><label id="password-label" for="password">Password</label><input id="password" name="password" type="password" autocomplete="current-password" minlength="1" maxlength="128" required><span id="password-hint" class="field-hint">Enter your password.</span></div>
+          <div class="captcha-field">
+            <div class="captcha-heading"><label for="captcha-answer">Verification code: <span id="captcha-question" aria-live="polite">Loading code…</span></label><button id="refresh-captcha" class="captcha-refresh" type="button">New code</button></div>
+            <input id="captcha-answer" name="captchaAnswer" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" minlength="6" maxlength="6" pattern="[A-Za-z0-9]{6}" required disabled aria-describedby="captcha-hint">
+            <span id="captcha-hint" class="field-hint">Type the 6 letters and numbers shown above. Uppercase or lowercase is okay.</span>
+          </div>
+          <button id="auth-submit" class="button primary wide" type="submit" disabled>Sign in</button>
+        </form>
+        <form id="admin-otp-form" class="hidden">
+          <p class="muted">Enter the six-digit sign-in code sent to the administrator email address.</p>
+          <div class="field"><label for="admin-otp-code">Email verification code</label><input id="admin-otp-code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" minlength="6" maxlength="6" required></div>
+          <button class="button primary wide" type="submit">Verify and sign in</button>
+          <button id="admin-otp-back" class="button light wide" type="button">Back to sign in</button>
+        </form>
+        <button id="forgot-password" class="forgot-password" type="button">Forgot password?</button>
+        <p id="auth-account-hint" class="muted small">Student accounts are created here. Only a signed-in administrator can create another admin account.</p>
+      </div>
+    </section>
+    <section id="dashboard" class="hidden">
+      <div class="page-heading"><div><span class="eyebrow">YOUR NSTP SPACE</span><h1 id="greeting">Attendance</h1><p id="dashboard-subtitle" class="muted"></p></div><div class="dashboard-actions"><div id="profile-avatar" class="profile-avatar hidden" aria-label="Student profile picture"></div><button id="edit-profile" class="button light hidden">My profile</button><button id="logout" class="button light">Sign out</button></div></div>
+      <section id="admin-panel" class="hidden">
+        <section class="admin-attendance-dashboard" aria-labelledby="attendance-dashboard-title">
+          <div class="section-title"><div><span class="eyebrow">AUTOMATIC ATTENDANCE COMPUTATION</span><h2 id="attendance-dashboard-title">Attendance dashboard</h2></div></div>
+          <div id="admin-attendance-metrics" class="summary-grid"></div>
+          <div class="attendance-chart-grid">
+            <article class="chart-card">
+              <span class="eyebrow">TODAY</span>
+              <h3>Attendance pie chart</h3>
+              <p class="muted small">Unique students scheduled in sessions that have started today.</p>
+              <div id="today-attendance-pie"></div>
+            </article>
+            <article class="chart-card">
+              <span class="eyebrow">TODAY</span>
+              <h3>Attendance by session</h3>
+              <p class="muted small">Students marked present, late, or absent in each session.</p>
+              <div id="today-attendance-bars"></div>
+            </article>
+          </div>
+          <section class="admin-tool-panel attendance-insights">
+            <div class="section-title"><div><span class="eyebrow">AUTOMATED REPORTS</span><h2>Session attendance reports</h2></div><div class="report-actions"><label class="sr-only" for="attendance-report-section">Report section</label><select id="attendance-report-section" aria-label="Report section"></select><button id="download-attendance-report" class="button primary">Download CSV report</button><button id="print-attendance-report" class="button light" type="button">Print summary</button></div></div>
+            <div id="admin-session-report"></div>
+          </section>
+          <section class="admin-tool-panel attendance-insights">
+            <div class="section-title"><div><span class="eyebrow">BELOW 75% ATTENDANCE</span><h2>Low attendance alerts</h2></div></div>
+            <div id="low-attendance-alerts"></div>
+          </section>
+          <section class="admin-tool-panel attendance-insights">
+            <div class="section-title"><div><span class="eyebrow">LAST 7 DAYS · BELOW 75%</span><h2>Weekly attendance watch</h2></div><div class="weekly-attendance-controls"><label for="weekly-attendance-section">Section</label><select id="weekly-attendance-section" aria-label="Filter weekly attendance warnings by section"></select></div></div>
+            <p id="weekly-attendance-period" class="muted small"></p>
+            <div id="weekly-attendance-alerts"></div>
+          </section>
+          <section class="admin-tool-panel attendance-insights">
+            <div class="section-title"><div><span class="eyebrow">TOP PERFORMERS</span><h2>Strong attendance</h2></div></div>
+            <div id="top-attendance-students"></div>
+          </section>
+          <section class="admin-tool-panel attendance-insights">
+            <div class="section-title"><div><span class="eyebrow">SECTION PERFORMANCE</span><h2>Attendance by section</h2></div></div>
+            <div id="section-performance-panel"></div>
+          </section>
+          <section class="admin-tool-panel attendance-insights">
+            <div class="section-title"><div><span class="eyebrow">WEEKLY TREND</span><h2>Attendance this month</h2></div></div>
+            <div id="admin-weekly-trend"></div>
+          </section>
+          <section class="admin-tool-panel attendance-insights">
+            <div class="section-title"><div><span class="eyebrow">MONTHLY OVERVIEW</span><h2>Attendance by month</h2></div></div>
+            <div id="admin-monthly-overview"></div>
+          </section>
+          <section class="admin-tool-panel attendance-insights">
+            <div class="section-title"><div><span class="eyebrow">SYSTEM ACTIVITY</span><h2>Recent system logs</h2></div></div>
+            <div id="admin-activity-logs"></div>
+          </section>
+          <section class="admin-tool-panel attendance-insights">
+            <div class="section-title"><div><span class="eyebrow">DATA PROTECTION</span><h2>System backup</h2></div><a id="download-system-backup" class="button primary" href="/api/admin/backup.zip">Download backup</a></div>
+            <p class="muted small">Includes attendance data and uploaded files. The archive contains password hashes and private student information; store it securely.</p>
+          </section>
+        </section>
+        <div class="section-title"><div><span class="eyebrow">OVERVIEW</span><h2>Attendance sessions</h2></div><button id="new-session" class="button primary">＋ New session</button></div>
+        <div class="search-row">
+          <input id="search-input" type="search" placeholder="Search sessions or locations..." aria-label="Search attendance sessions">
+        </div>
+        <div id="sessions-grid" class="sessions-grid"></div>
+        <section id="records-panel" class="records-panel hidden"><div class="section-title"><div><span class="eyebrow">SESSION ROSTER</span><h2 id="records-title">Attendance records</h2></div><button id="close-records" class="button light">Close</button></div><div id="records-table"></div></section>
+        <section class="admin-tool-panel">
+          <div class="section-title"><div><span class="eyebrow">SECTION ROSTERS</span><h2>Students by section</h2></div></div>
+          <div class="inline-create"><input id="new-section-name" maxlength="80" placeholder="e.g. NSTP 1A" aria-label="New section name"><button id="create-section" class="button primary">Add section</button></div>
+          <div id="sections-grid" class="section-folders"></div>
+          <section id="unassigned-panel" class="records-panel hidden"><div class="section-title"><div><span class="eyebrow">EXISTING ACCOUNTS</span><h2>Assign students to a section</h2></div></div><div id="unassigned-table"></div></section>
+        </section>
+        <section class="admin-tool-panel">
+          <div class="section-title"><div><span class="eyebrow">ADMIN CHECK-IN</span><h2>Scan a student QR</h2></div></div>
+          <div class="scan-card admin-scan-card"><div><p class="muted">Select the attendance session and action, then scan the student’s personal QR from their dashboard.</p><label class="manual-label" for="admin-scan-session">Attendance session</label><select id="admin-scan-session"></select></div><div class="scan-controls"><div class="segmented"><button class="admin-scan-action scan-action active" data-action="in">Check in</button><button class="admin-scan-action scan-action" data-action="out">Check out</button></div><button id="admin-start-scan" class="button primary">Open camera</button><button id="admin-stop-scan" class="button light hidden">Stop camera</button><div id="admin-camera" class="camera"></div><label class="manual-label" for="admin-manual-token">Or paste a student QR value</label><div class="manual-row"><input id="admin-manual-token" placeholder="Paste student QR value"><button id="admin-submit-token" class="button light">Submit</button></div></div></div>
+        </section>
+        <section class="admin-tool-panel">
+          <div class="section-title"><div><span class="eyebrow">ASSIGNMENTS</span><h2>Student tasks</h2></div><button id="new-task" class="button primary">＋ Create task</button></div>
+          <div id="admin-tasks" class="sessions-grid"></div>
+          <section id="task-submissions-panel" class="records-panel hidden"><div class="section-title"><div><span class="eyebrow">STUDENT WORK</span><h2 id="task-submissions-title">Submissions</h2></div><button id="close-task-submissions" class="button light">Close</button></div><div id="task-submissions-table"></div></section>
+        </section>
+          <section class="admin-tool-panel">
+            <div class="section-title"><div><span class="eyebrow">ADMIN ACCOUNTS</span><h2>Create an admin account</h2></div></div>
+            <p class="muted small">Each administrator gets a separate username and password. Only administrators can create these accounts.</p>
+            <form id="admin-create-form">
+              <div class="field"><label for="new-admin-username">Username</label><input id="new-admin-username" name="username" autocomplete="off" minlength="3" maxlength="32" pattern="[A-Za-z0-9._-]{3,32}" required><span class="field-hint">3–32 letters, numbers, dots, underscores, or hyphens.</span></div>
+              <div class="field"><label for="new-admin-email">Personal email</label><input id="new-admin-email" name="email" type="email" autocomplete="email" maxlength="254" required><span class="field-hint">Enter the professor’s personal email. It will be used for password recovery and admin sign-in verification codes.</span></div>
+              <div class="field"><label for="new-admin-password">Password</label><input id="new-admin-password" name="password" type="password" autocomplete="new-password" minlength="10" maxlength="128" required><span class="field-hint">Use at least 10 characters.</span></div>
+              <button class="button primary" type="submit">Create admin account</button>
+            </form>
+          </section>
+      </section>
+      <section id="student-panel" class="hidden">
+        <div class="student-qr-shortcut"><div><span class="eyebrow">YOUR STUDENT ID</span><p class="muted">Show this QR to your NSTP admin for attendance check-in.</p></div><button id="show-student-qr" class="button primary">Show my QR</button></div>
+        <section class="student-overview" aria-label="Student overview">
+          <article class="student-welcome">
+            <span class="eyebrow">STUDENT DASHBOARD</span>
+            <h2>Your NSTP journey</h2>
+            <p id="student-overview-date" class="muted"></p>
+            <div class="progress-copy"><span>Attendance progress</span><strong id="attendance-progress-label">—</strong></div>
+            <div class="progress-track" role="progressbar" aria-label="Attendance progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="attendance-progress"></span></div>
+          </article>
+          <article id="next-session" class="next-session-card" aria-live="polite"></article>
+        </section>
+        <section id="student-attendance-guidance" class="student-attendance-guidance" aria-live="polite"></section>
+        <div id="student-notifications" class="notifications-panel"></div>
+        <div class="section-title"><div><span class="eyebrow">YOUR RECORD</span><h2>Attendance history</h2></div><div class="student-report-actions"><button id="download-student-attendance" class="button light" type="button">Download CSV</button><button id="print-student-attendance" class="button primary" type="button">Print report</button></div></div>
+        <div id="student-summary" class="summary-grid"></div>
+        <div class="search-row student-search">
+          <input id="student-search-input" type="search" placeholder="Search your sessions..." aria-label="Search attendance history">
+        </div>
+        <div id="student-sessions" class="sessions-grid"></div>
+        <section class="admin-tool-panel"><div class="section-title"><div><span class="eyebrow">ASSIGNMENTS</span><h2>Tasks</h2></div></div><div id="student-tasks" class="sessions-grid"></div></section>
+        <div class="scan-card"><div><span class="eyebrow">QUICK ATTENDANCE</span><h2>Scan a session QR</h2><p class="muted">Sign in, choose IN or OUT, then scan the current code displayed by your NSTP facilitator.</p></div><div class="scan-controls"><div class="segmented"><button class="scan-action active" data-action="in">Check in</button><button class="scan-action" data-action="out">Check out</button></div><button id="start-scan" class="button primary">Open camera</button><button id="stop-scan" class="button light hidden">Stop camera</button><div id="camera" class="camera"></div><label class="manual-label" for="manual-token">Or paste a QR link / token</label><div class="manual-row"><input id="manual-token" placeholder="Paste QR link or token"><button id="submit-token" class="button light">Submit</button></div></div></div>
+      </section>
+    </section>
+  </main>
+  <div id="attendance-print-report" class="attendance-print-report"></div>
+  <dialog id="profile-dialog">
+    <form id="profile-form">
+      <div class="dialog-heading"><div><span class="eyebrow">STUDENT ACCOUNT</span><h2>Edit your profile</h2></div><button class="icon-button" type="button" data-close-dialog="profile-dialog" aria-label="Close">×</button></div>
+      <div class="profile-picture-editor"><img id="profile-picture-preview" class="profile-picture-preview hidden" alt="Profile picture preview"><span id="profile-picture-placeholder" class="profile-picture-placeholder">Add a picture</span></div>
+      <div class="field"><label for="profile-picture">Profile picture</label><input id="profile-picture" name="profilePicture" type="file" accept="image/jpeg,image/png,image/webp"><span class="field-hint">JPG, PNG, or WebP · max 5 MB</span></div>
+      <div class="field"><label for="profile-name">Full name</label><input id="profile-name" name="name" autocomplete="name" minlength="2" maxlength="80" required></div>
+      <div class="field"><label for="profile-email">Email address</label><input id="profile-email" name="email" type="email" autocomplete="email" maxlength="254" required></div>
+      <p class="muted small">Your email address is also used when you sign in.</p>
+      <div class="dialog-actions"><button class="button light" type="button" data-close-dialog="profile-dialog">Cancel</button><button class="button primary" type="submit">Save changes</button></div>
+    </form>
+  </dialog>
+  <dialog id="forgot-dialog">
+    <form id="forgot-form">
+      <div class="dialog-heading"><div><span class="eyebrow">ACCOUNT RECOVERY</span><h2 id="forgot-title">Password recovery</h2></div><button class="icon-button" type="button" data-close-dialog="forgot-dialog" aria-label="Close">×</button></div>
+      <p id="forgot-description" class="muted small">Enter the email address registered to your account. If it matches, we’ll send a secure reset link to that email.</p>
+      <div class="field"><label for="forgot-email">Email address</label><input id="forgot-email" type="email" autocomplete="email" required></div>
+      <div class="dialog-actions"><button class="button light" type="button" data-close-dialog="forgot-dialog">Cancel</button><button class="button primary" type="submit">Send reset link</button></div>
+    </form>
+  </dialog>
+  <dialog id="student-qr-dialog"><div class="qr-dialog"><button class="icon-button close-qr" type="button" data-close-dialog="student-qr-dialog" aria-label="Close">×</button><span class="eyebrow">YOUR STUDENT QR</span><h2>Show this to your admin</h2><img id="student-qr-image" alt="Your personal student QR code"><p id="student-qr-timer" class="qr-timer"></p><button id="copy-student-qr" class="button light" type="button">Copy QR value</button><p class="muted small">This QR expires after 10 minutes. Generate a new one if it expires or is exposed.</p></div></dialog>
+  <dialog id="task-dialog"><form id="task-form">
+    <div class="dialog-heading"><div><span class="eyebrow">STUDENT ASSIGNMENT</span><h2>Create task</h2></div><button class="icon-button" type="button" data-close-dialog="task-dialog" aria-label="Close">×</button></div>
+    <div class="field"><label for="task-title">Task title</label><input id="task-title" required minlength="2" maxlength="120" placeholder="Community reflection"></div>
+    <div class="field"><label for="task-description">Instructions</label><textarea id="task-description" maxlength="2000" rows="4" placeholder="Add task instructions"></textarea></div>
+    <div class="field"><label for="task-due">Due date and time</label><input id="task-due" type="datetime-local" required></div>
+    <div class="field"><label for="task-section">Assign to</label><select id="task-section"></select></div>
+    <div class="dialog-actions"><button class="button light" type="button" data-close-dialog="task-dialog">Cancel</button><button class="button primary" type="submit">Create task</button></div>
+  </form></dialog>
+  <dialog id="reset-dialog">
+    <form id="reset-form">
+      <div class="dialog-heading"><div><span class="eyebrow">ACCOUNT RECOVERY</span><h2>Choose a new password</h2></div><button class="icon-button" type="button" data-close-dialog="reset-dialog" aria-label="Close">×</button></div>
+      <p class="muted small">Choose a new password with at least 10 characters.</p>
+      <div class="field"><label for="reset-password">New password</label><input id="reset-password" type="password" autocomplete="new-password" minlength="10" maxlength="128" required></div>
+      <div class="field"><label for="reset-password-confirm">Confirm new password</label><input id="reset-password-confirm" type="password" autocomplete="new-password" minlength="10" maxlength="128" required></div>
+      <div class="dialog-actions"><button class="button light" type="button" data-close-dialog="reset-dialog">Cancel</button><button class="button primary" type="submit">Reset password</button></div>
+    </form>
+  </dialog>
+  <dialog id="student-password-dialog">
+    <form id="student-password-form">
+      <div class="dialog-heading"><div><span class="eyebrow">SECURE YOUR ACCOUNT</span><h2>Choose a private password</h2></div></div>
+      <p class="muted small">Your student number is only a temporary first password. Set a private password to continue; your student number will no longer work to sign in.</p>
+      <div class="field"><label for="student-current-password">Temporary student-number password</label><input id="student-current-password" type="password" autocomplete="current-password" required></div>
+      <div class="field"><label for="student-new-password">New password</label><input id="student-new-password" type="password" autocomplete="new-password" minlength="10" maxlength="128" required></div>
+      <div class="field"><label for="student-new-password-confirm">Confirm new password</label><input id="student-new-password-confirm" type="password" autocomplete="new-password" minlength="10" maxlength="128" required></div>
+      <div class="dialog-actions"><button id="student-password-logout" class="button light" type="button">Sign out</button><button class="button primary" type="submit">Set password</button></div>
+    </form>
+  </dialog>
+  <dialog id="attendance-correction-dialog">
+    <form id="attendance-correction-form">
+      <div class="dialog-heading"><div><span class="eyebrow">AUDITED CHANGE</span><h2>Correct attendance record</h2></div><button class="icon-button" type="button" data-close-dialog="attendance-correction-dialog" aria-label="Close">×</button></div>
+      <input id="attendance-correction-id" type="hidden">
+      <div class="field"><label for="attendance-correction-check-in">Check-in time</label><input id="attendance-correction-check-in" type="datetime-local" required></div>
+      <div class="field"><label for="attendance-correction-check-out">Check-out time</label><input id="attendance-correction-check-out" type="datetime-local"></div>
+      <div class="field"><label for="attendance-correction-reason">Reason for correction</label><textarea id="attendance-correction-reason" minlength="3" maxlength="500" required></textarea></div>
+      <div class="dialog-actions"><button class="button light" type="button" data-close-dialog="attendance-correction-dialog">Cancel</button><button class="button primary" type="submit">Save correction</button></div>
+    </form>
+  </dialog>
+  <dialog id="session-dialog"><form id="session-form" method="dialog"><div class="dialog-heading"><div><span class="eyebrow">ATTENDANCE SESSION</span><h2 id="dialog-title">Create session</h2></div><button class="icon-button" value="cancel" aria-label="Close">×</button></div><input id="session-id" type="hidden"><div class="field"><label for="session-name">Session name</label><input id="session-name" required maxlength="120" placeholder="NSTP Community Outreach"></div><div class="field"><label for="event-date">Event date</label><input id="event-date" type="date" required></div><div class="field"><label for="event-time">Start time</label><input id="event-time" type="time" required><span class="field-hint">Check-ins after this time are marked late.</span></div><div class="field"><label for="location">Location</label><input id="location" maxlength="120" placeholder="Campus / activity site"></div><div class="field"><label for="session-section">Section</label><select id="session-section"></select></div><label id="active-wrap" class="check-field hidden"><input id="session-active" type="checkbox" checked> Session is active</label><div class="dialog-actions"><button class="button light" value="cancel">Cancel</button><button id="save-session" class="button primary" value="default">Save session</button></div></form></dialog>
+  <dialog id="qr-dialog"><div class="qr-dialog"><button id="close-qr" class="icon-button close-qr" aria-label="Close">×</button><span class="eyebrow">LIVE ATTENDANCE QR</span><h2 id="qr-title">Scan to attend</h2><img id="qr-image" alt="Attendance QR code"><p id="qr-timer" class="qr-timer"></p><p class="muted small">This code expires after 10 minutes. Generate a new one when it expires.</p><button id="refresh-qr" class="button primary wide">Generate new QR</button></div></dialog>
+  <script src="app.js" defer></script>
+</body>
+</html>
